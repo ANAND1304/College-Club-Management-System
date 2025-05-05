@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clubs</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Clubs</h1>
+        <nav>
+            <a href="index.html">Home</a>
+            <a href="members.html">Members</a>
+            <a href="clubs.html">Clubs</a>
+            <a href="events.html">Events</a>
+        </nav>
+    </header>
+
+    <main>
+        <section>
+            <h2>Add a New Club</h2>
+            <form id="addClubForm">
+                <label for="clubName">Club Name:</label>
+                <input type="text" id="clubName" name="clubName" required>
+
+                <label for="presidentId">President ID:</label>
+                <input type="number" id="presidentId" name="presidentId" required>
+
+                <button type="submit">Add Club</button>
+            </form>
+        </section>
+
+        <section>
+            <h2>All Clubs</h2>
+            <table id="clubsTable">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Club Name</th>
+                        <th>President ID</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Clubs will be dynamically added here -->
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 College Club Management</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
