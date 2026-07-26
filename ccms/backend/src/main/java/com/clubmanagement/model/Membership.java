@@ -2,7 +2,6 @@ package com.clubmanagement.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -13,6 +12,7 @@ public class Membership {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -34,7 +34,12 @@ public class Membership {
     private LocalDateTime joinedAt;
 
     @Column(name = "requested_at")
-    private LocalDateTime requestedAt = LocalDateTime.now();
+    private LocalDateTime requestedAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (requestedAt == null) requestedAt = LocalDateTime.now();
+    }
 
     public enum Status {
         PENDING, APPROVED, REJECTED

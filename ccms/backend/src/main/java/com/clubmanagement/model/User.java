@@ -16,6 +16,7 @@ public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
     @Column(nullable = false)
@@ -41,7 +42,13 @@ public class User implements UserDetails {
     private boolean active = true;
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (role == null) role = Role.STUDENT;
+    }
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Membership> memberships = new ArrayList<>();

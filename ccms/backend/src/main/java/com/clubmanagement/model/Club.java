@@ -2,47 +2,69 @@ package com.clubmanagement.model;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @Entity
-@Table(name = "clubs")
+@Table(name = "users")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Club {
+public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
     @Column(nullable = false)
     private String name;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
+    @Column(unique = true, nullable = false)
+    private String email;
 
-    private String category;
+    @Column(nullable = false)
+    private String password;
 
-    @Column(name = "image_url")
-    private String imageUrl;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.STUDENT;
+
+    private String department;
+    private String phone;
+
+    @Column(name = "profile_image")
+    private String profileImage;
 
     @Column(name = "is_active")
     private boolean active = true;
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by")
-    private User createdBy;
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (role == null) role = Role.STUDENT;
+    }
 
-    @OneToMany(mappedBy = "club", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Membership> memberships = new ArrayList<>();
 
-    @OneToMany(mappedBy = "club", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Event> events = new ArrayList<>();
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
+    }
 
-    @OneToMany(mappedBy = "club", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Announcement> announcements = new ArrayList<>();
+    @Override public String getUsername() { return email; }
+    @Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return active; }
+    @Override public boolean isCredentialsNonExpired() { return true; }
+    @Override public boolean isEnabled() { return active; }
+
+    public enum Role {
+        ADMIN, CLUB_HEAD, STUDENT
+    }
 }

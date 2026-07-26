@@ -2,7 +2,6 @@ package com.clubmanagement.model;
 
 import jakarta.persistence.*;
 import lombok.*;
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -13,6 +12,7 @@ public class Event {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id", nullable = false, updatable = false)
     private Long id;
 
     @Column(nullable = false)
@@ -34,7 +34,12 @@ public class Event {
     private boolean active = true;
 
     @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    private LocalDateTime createdAt;
+
+    @PrePersist
+    protected void onCreate() {
+        if (createdAt == null) createdAt = LocalDateTime.now();
+    }
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "club_id", nullable = false)
