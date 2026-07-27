@@ -4,7 +4,6 @@ import com.clubmanagement.dto.ClubDTO;
 import com.clubmanagement.exception.ResourceNotFoundException;
 import com.clubmanagement.model.*;
 import com.clubmanagement.repository.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,22 +11,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class ClubService {
 
-    private final ClubRepository clubRepository;
+    private final ClubRepository       clubRepository;
     private final MembershipRepository membershipRepository;
+
+    public ClubService(ClubRepository clubRepository,
+                       MembershipRepository membershipRepository) {
+        this.clubRepository       = clubRepository;
+        this.membershipRepository = membershipRepository;
+    }
 
     public List<ClubDTO.Response> getAllClubs() {
         return clubRepository.findByActiveTrue().stream()
-            .map(this::toResponse)
-            .collect(Collectors.toList());
+            .map(this::toResponse).collect(Collectors.toList());
     }
 
     public ClubDTO.Response getClubById(Long id) {
-        Club club = clubRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Club not found with id: " + id));
-        return toResponse(club);
+        return toResponse(clubRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Club not found: " + id)));
     }
 
     @Transactional
@@ -46,7 +48,7 @@ public class ClubService {
     @Transactional
     public ClubDTO.Response updateClub(Long id, ClubDTO.Request request, User updatedBy) {
         Club club = clubRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Club not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Club not found: " + id));
         club.setName(request.getName());
         club.setDescription(request.getDescription());
         club.setCategory(request.getCategory());
@@ -57,7 +59,7 @@ public class ClubService {
     @Transactional
     public void deleteClub(Long id) {
         Club club = clubRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Club not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Club not found: " + id));
         club.setActive(false);
         clubRepository.save(club);
     }
@@ -65,13 +67,12 @@ public class ClubService {
     @Transactional
     public void joinClub(Long clubId, User user) {
         if (membershipRepository.existsByUserIdAndClubId(user.getId(), clubId)) {
-            throw new RuntimeException("You have already joined or requested to join this club");
+            throw new RuntimeException("Already a member or request pending");
         }
         Club club = clubRepository.findById(clubId)
-            .orElseThrow(() -> new ResourceNotFoundException("Club not found with id: " + clubId));
+            .orElseThrow(() -> new ResourceNotFoundException("Club not found: " + clubId));
         Membership membership = Membership.builder()
-            .user(user)
-            .club(club)
+            .user(user).club(club)
             .status(Membership.Status.PENDING)
             .clubRole("MEMBER")
             .build();
@@ -80,13 +81,15 @@ public class ClubService {
 
     @Transactional
     public void leaveClub(Long clubId, User user) {
-        Membership membership = membershipRepository.findByUserIdAndClubId(user.getId(), clubId)
+        Membership membership = membershipRepository
+            .findByUserIdAndClubId(user.getId(), clubId)
             .orElseThrow(() -> new ResourceNotFoundException("Membership not found"));
         membershipRepository.delete(membership);
     }
 
     public List<ClubDTO.MemberResponse> getClubMembers(Long clubId) {
-        return membershipRepository.findByClubIdAndStatus(clubId, Membership.Status.APPROVED)
+        return membershipRepository
+            .findByClubIdAndStatus(clubId, Membership.Status.APPROVED)
             .stream().map(m -> {
                 ClubDTO.MemberResponse r = new ClubDTO.MemberResponse();
                 r.setMembershipId(m.getId());
@@ -109,7 +112,8 @@ public class ClubService {
         r.setActive(club.isActive());
         r.setCreatedAt(club.getCreatedAt());
         if (club.getCreatedBy() != null) r.setCreatedByName(club.getCreatedBy().getName());
-        r.setMemberCount(membershipRepository.countByClubIdAndStatus(club.getId(), Membership.Status.APPROVED));
+        r.setMemberCount(membershipRepository.countByClubIdAndStatus(
+            club.getId(), Membership.Status.APPROVED));
         return r;
     }
 }

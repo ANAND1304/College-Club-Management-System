@@ -3,8 +3,6 @@ package com.clubmanagement.service;
 import com.clubmanagement.exception.ResourceNotFoundException;
 import com.clubmanagement.model.*;
 import com.clubmanagement.repository.*;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,22 +11,31 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class AdminService {
 
-    private final UserRepository userRepository;
-    private final ClubRepository clubRepository;
-    private final EventRepository eventRepository;
+    private final UserRepository       userRepository;
+    private final ClubRepository       clubRepository;
+    private final EventRepository      eventRepository;
     private final MembershipRepository membershipRepository;
+
+    public AdminService(UserRepository userRepository,
+                        ClubRepository clubRepository,
+                        EventRepository eventRepository,
+                        MembershipRepository membershipRepository) {
+        this.userRepository       = userRepository;
+        this.clubRepository       = clubRepository;
+        this.eventRepository      = eventRepository;
+        this.membershipRepository = membershipRepository;
+    }
 
     public Map<String, Object> getDashboardStats() {
         Map<String, Object> stats = new LinkedHashMap<>();
-        stats.put("totalUsers", userRepository.count());
-        stats.put("totalClubs", clubRepository.countByActiveTrue());
-        stats.put("totalEvents", eventRepository.countByActiveTrue());
+        stats.put("totalUsers",      userRepository.count());
+        stats.put("totalClubs",      clubRepository.countByActiveTrue());
+        stats.put("totalEvents",     eventRepository.countByActiveTrue());
         stats.put("pendingRequests", membershipRepository.countByStatus(Membership.Status.PENDING));
         stats.put("approvedMembers", membershipRepository.countByStatus(Membership.Status.APPROVED));
-        stats.put("adminCount", userRepository.countByRole(User.Role.ADMIN));
+        stats.put("adminCount",      userRepository.countByRole(User.Role.ADMIN));
         return stats;
     }
 
@@ -95,7 +102,8 @@ public class AdminService {
         userRepository.save(user);
     }
 
-    @Data
+    // ── Inner DTOs ────────────────────────────────────────────────────────────
+
     public static class UserSummary {
         private Long id;
         private String name;
@@ -104,9 +112,24 @@ public class AdminService {
         private String department;
         private boolean active;
         private LocalDateTime createdAt;
+
+        public Long getId()                 { return id; }
+        public String getName()             { return name; }
+        public String getEmail()            { return email; }
+        public String getRole()             { return role; }
+        public String getDepartment()       { return department; }
+        public boolean isActive()           { return active; }
+        public LocalDateTime getCreatedAt() { return createdAt; }
+
+        public void setId(Long v)                 { this.id = v; }
+        public void setName(String v)             { this.name = v; }
+        public void setEmail(String v)            { this.email = v; }
+        public void setRole(String v)             { this.role = v; }
+        public void setDepartment(String v)       { this.department = v; }
+        public void setActive(boolean v)          { this.active = v; }
+        public void setCreatedAt(LocalDateTime v) { this.createdAt = v; }
     }
 
-    @Data
     public static class MembershipSummary {
         private Long membershipId;
         private Long userId;
@@ -116,5 +139,23 @@ public class AdminService {
         private String clubName;
         private String status;
         private LocalDateTime requestedAt;
+
+        public Long getMembershipId()           { return membershipId; }
+        public Long getUserId()                 { return userId; }
+        public String getUserName()             { return userName; }
+        public String getUserEmail()            { return userEmail; }
+        public Long getClubId()                 { return clubId; }
+        public String getClubName()             { return clubName; }
+        public String getStatus()               { return status; }
+        public LocalDateTime getRequestedAt()   { return requestedAt; }
+
+        public void setMembershipId(Long v)         { this.membershipId = v; }
+        public void setUserId(Long v)               { this.userId = v; }
+        public void setUserName(String v)           { this.userName = v; }
+        public void setUserEmail(String v)          { this.userEmail = v; }
+        public void setClubId(Long v)               { this.clubId = v; }
+        public void setClubName(String v)           { this.clubName = v; }
+        public void setStatus(String v)             { this.status = v; }
+        public void setRequestedAt(LocalDateTime v) { this.requestedAt = v; }
     }
 }

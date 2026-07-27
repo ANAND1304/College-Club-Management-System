@@ -4,7 +4,6 @@ import com.clubmanagement.dto.EventDTO;
 import com.clubmanagement.exception.ResourceNotFoundException;
 import com.clubmanagement.model.*;
 import com.clubmanagement.repository.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,11 +11,15 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 public class EventService {
 
     private final EventRepository eventRepository;
-    private final ClubRepository clubRepository;
+    private final ClubRepository  clubRepository;
+
+    public EventService(EventRepository eventRepository, ClubRepository clubRepository) {
+        this.eventRepository = eventRepository;
+        this.clubRepository  = clubRepository;
+    }
 
     public List<EventDTO.Response> getAllEvents() {
         return eventRepository.findByActiveTrueOrderByEventDateAsc()
@@ -30,13 +33,13 @@ public class EventService {
 
     public EventDTO.Response getEventById(Long id) {
         return toResponse(eventRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id)));
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id)));
     }
 
     @Transactional
     public EventDTO.Response createEvent(EventDTO.Request request, User createdBy) {
         Club club = clubRepository.findById(request.getClubId())
-            .orElseThrow(() -> new ResourceNotFoundException("Club not found with id: " + request.getClubId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Club not found: " + request.getClubId()));
         Event event = Event.builder()
             .title(request.getTitle())
             .description(request.getDescription())
@@ -54,7 +57,7 @@ public class EventService {
     @Transactional
     public EventDTO.Response updateEvent(Long id, EventDTO.Request request, User updatedBy) {
         Event event = eventRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
         event.setTitle(request.getTitle());
         event.setDescription(request.getDescription());
         event.setEventDate(request.getEventDate());
@@ -67,7 +70,7 @@ public class EventService {
     @Transactional
     public void deleteEvent(Long id) {
         Event event = eventRepository.findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id));
         event.setActive(false);
         eventRepository.save(event);
     }
