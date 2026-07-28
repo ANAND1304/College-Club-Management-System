@@ -10,5 +10,9 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=build /app/target/college-club-management-1.0.0.jar app.jar
+
+# Expose port 8080
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar", "--spring.profiles.active=prod"]
+
+# Run with prod profile
+ENTRYPOINT ["java", "-jar", "-Dserver.port=8080", "app.jar", "--spring.profiles.active=prod"]
