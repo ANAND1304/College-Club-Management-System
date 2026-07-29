@@ -21,16 +21,19 @@ public class EventService {
         this.clubRepository  = clubRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<EventDTO.Response> getAllEvents() {
         return eventRepository.findByActiveTrueOrderByEventDateAsc()
             .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<EventDTO.Response> getEventsByClub(Long clubId) {
         return eventRepository.findByClubIdAndActiveTrueOrderByEventDateAsc(clubId)
             .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public EventDTO.Response getEventById(Long id) {
         return toResponse(eventRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Event not found: " + id)));
@@ -51,7 +54,22 @@ public class EventService {
             .createdBy(createdBy)
             .active(true)
             .build();
-        return toResponse(eventRepository.save(event));
+        Event saved = eventRepository.save(event);
+        // Build response manually to avoid lazy loading
+        EventDTO.Response r = new EventDTO.Response();
+        r.setId(saved.getId());
+        r.setTitle(saved.getTitle());
+        r.setDescription(saved.getDescription());
+        r.setEventDate(saved.getEventDate());
+        r.setLocation(saved.getLocation());
+        r.setImageUrl(saved.getImageUrl());
+        r.setMaxParticipants(saved.getMaxParticipants());
+        r.setActive(saved.isActive());
+        r.setCreatedAt(saved.getCreatedAt());
+        r.setClubId(club.getId());
+        r.setClubName(club.getName());
+        r.setCreatedByName(createdBy.getName());
+        return r;
     }
 
     @Transactional
@@ -86,9 +104,14 @@ public class EventService {
         r.setMaxParticipants(event.getMaxParticipants());
         r.setActive(event.isActive());
         r.setCreatedAt(event.getCreatedAt());
-        r.setClubId(event.getClub().getId());
-        r.setClubName(event.getClub().getName());
-        if (event.getCreatedBy() != null) r.setCreatedByName(event.getCreatedBy().getName());
+        try {
+            r.setClubId(event.getClub().getId());
+            r.setClubName(event.getClub().getName());
+        } catch (Exception e) { /* lazy load */ }
+        try {
+            if (event.getCreatedBy() != null)
+                r.setCreatedByName(event.getCreatedBy().getName());
+        } catch (Exception e) { /* lazy load */ }
         return r;
     }
 }
