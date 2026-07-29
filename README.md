@@ -26,7 +26,8 @@ A production-grade full-stack web application for managing college clubs, events
 
 ---
 
-URL Link:- https: //college-club-management-system-tawny.vercel.app
+## URL Link
+https: //college-club-management-system-tawny.vercel.app/
 
 ## 🏗️ Architecture
 
