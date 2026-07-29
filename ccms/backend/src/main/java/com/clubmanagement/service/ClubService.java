@@ -22,11 +22,13 @@ public class ClubService {
         this.membershipRepository = membershipRepository;
     }
 
+    @Transactional(readOnly = true)
     public List<ClubDTO.Response> getAllClubs() {
         return clubRepository.findByActiveTrue().stream()
             .map(this::toResponse).collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public ClubDTO.Response getClubById(Long id) {
         return toResponse(clubRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Club not found: " + id)));
@@ -42,7 +44,19 @@ public class ClubService {
             .createdBy(createdBy)
             .active(true)
             .build();
-        return toResponse(clubRepository.save(club));
+        Club saved = clubRepository.save(club);
+        // Build response manually to avoid lazy loading issues
+        ClubDTO.Response r = new ClubDTO.Response();
+        r.setId(saved.getId());
+        r.setName(saved.getName());
+        r.setDescription(saved.getDescription());
+        r.setCategory(saved.getCategory());
+        r.setImageUrl(saved.getImageUrl());
+        r.setActive(saved.isActive());
+        r.setCreatedAt(saved.getCreatedAt());
+        r.setCreatedByName(createdBy.getName());
+        r.setMemberCount(0);
+        return r;
     }
 
     @Transactional
@@ -87,6 +101,7 @@ public class ClubService {
         membershipRepository.delete(membership);
     }
 
+    @Transactional(readOnly = true)
     public List<ClubDTO.MemberResponse> getClubMembers(Long clubId) {
         return membershipRepository
             .findByClubIdAndStatus(clubId, Membership.Status.APPROVED)
@@ -111,7 +126,13 @@ public class ClubService {
         r.setImageUrl(club.getImageUrl());
         r.setActive(club.isActive());
         r.setCreatedAt(club.getCreatedAt());
-        if (club.getCreatedBy() != null) r.setCreatedByName(club.getCreatedBy().getName());
+        try {
+            if (club.getCreatedBy() != null) {
+                r.setCreatedByName(club.getCreatedBy().getName());
+            }
+        } catch (Exception e) {
+            r.setCreatedByName(null);
+        }
         r.setMemberCount(membershipRepository.countByClubIdAndStatus(
             club.getId(), Membership.Status.APPROVED));
         return r;
